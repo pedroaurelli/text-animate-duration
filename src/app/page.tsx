@@ -47,7 +47,6 @@ function calculateAnimationDuration(responseSize: number, maxAnimation: number, 
 export default function Home() {
   const [minDuration, setMinDuration] = useState<number>(2)
   const [maxDuration, setMaxDuration] = useState<number>(30)
-  const [responseSize, setResponseSize] = useState<number>((text.length / 3))
   const [largeTextValue, setLargeTextValue] = useState<number>((text.length / 2))
 
   const [serverResponseDuration, setServerResponseDuration] = useState<number | null>(0)
@@ -56,13 +55,6 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const handleGenerate = () => {
-    setFinalResponse(text.slice(0, responseSize!))
-
-    /*
-      Smallest response:
-      size: 277 caracteres
-      duration: 1822.1 ms
-    */
     setIsLoading(true)
 
     if (serverResponseDuration) {
@@ -76,7 +68,7 @@ export default function Home() {
     }
   }
 
-  const disabledButton = !minDuration || !maxDuration || !largeTextValue || !responseSize
+  const disabledButton = !minDuration || !maxDuration || !largeTextValue || !finalResponse?.length
 
   return (
     <div className='grid grid-cols-2'>
@@ -84,15 +76,15 @@ export default function Home() {
         <h1 className="text-4xl font-bold mb-8">Text animation duration</h1>
         <div className='flex flex-col gap-3'>
           <div>
-            <label className='text-neutral-400'>Assistant output length ({(responseSize).toFixed(0)} chars)</label>
+            <label className='text-neutral-400'>Assistant output length ({finalResponse && (finalResponse.length).toFixed(0)} chars)</label>
             <input
               type='range'
               min={0}
               max={text.length}
-              value={formattedNumber(responseSize)}
+              value={finalResponse ? formattedNumber(finalResponse?.length) : 0}
               onChange={(e) => {
-                setResponseSize(parseInt(e.target.value))
-                setServerResponseDuration(estimateServerDuration(responseSize!))
+                setServerResponseDuration(estimateServerDuration(parseInt(e.target.value)))
+                setFinalResponse(text.slice(0, parseInt(e.target.value)))
               }}
               className='w-full'
             />
@@ -141,22 +133,22 @@ export default function Home() {
             </button>
           )}
         </div>
-        {serverResponseDuration && (
+        {serverResponseDuration && finalResponse && (
             <div className='font-normal text-purple-200 mt-4'>
               <p className='text-sm'>Server response time (loading) = {formattedNumber(serverResponseDuration / 1000)}s</p>
-              <p className='text-sm'>Char animation duration = {calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue)}ms</p>
-              <p className='text-sm text-purple-400'>Total response time (animation + Server response time) = {formattedNumber(((calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue) * responseSize) + serverResponseDuration) / 1000)}s</p>
+              <p className='text-sm'>Char animation duration = {calculateAnimationDuration(finalResponse?.length, maxDuration, minDuration, largeTextValue)}ms</p>
+              <p className='text-sm text-purple-400'>Total response time (animation + Server response time) = {formattedNumber(((calculateAnimationDuration(finalResponse?.length, maxDuration, minDuration, largeTextValue) * finalResponse?.split(' ').length) + serverResponseDuration) / 1000)}s</p>
           </div>
         )}
       </div>
       <div className='bg-neutral-900 w-full h-full p-4'>
         <h2 className='text-3xl font-semibold mb-4'>
           Assistant output
-          {serverResponseDuration && (
+          {serverResponseDuration && finalResponse && (
             <div className='font-normal text-purple-200 mt-4'>
               <p className='text-sm'>Server response time (loading) = {formattedNumber(serverResponseDuration / 1000)}s</p>
-              <p className='text-sm'>Char animation duration = {calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue)}ms</p>
-              <p className='text-sm text-purple-400'>Total response time (animation + Server response time) = {formattedNumber(((calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue) * responseSize) + serverResponseDuration) / 1000)}s</p>
+              <p className='text-sm'>Char animation duration = {calculateAnimationDuration(finalResponse?.length, maxDuration, minDuration, largeTextValue)}ms</p>
+              <p className='text-sm text-purple-400'>Total response time (animation + Server response time) = {formattedNumber(((calculateAnimationDuration(finalResponse?.length, maxDuration, minDuration, largeTextValue) * finalResponse?.split(' ').length) + serverResponseDuration) / 1000)}s</p>
           </div>
           )}
         </h2>
@@ -167,12 +159,13 @@ export default function Home() {
               <div className='size-6 rounded-full ring-2' />
               <p className='text-neutral-300 mt-2 p-2 bg-neutral-800 rounded-md w-full'>
                 <TypeAnimation
+                  splitter={str => str.split(/(?= )/)}
                   sequence={[
                     finalResponse
                   ]}
                   speed={{
                     type: 'keyStrokeDelayInMs',
-                    value: calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue)
+                    value: calculateAnimationDuration(finalResponse?.length, maxDuration, minDuration, largeTextValue)
                   }}
                   wrapper="span"
                   cursor={true}
