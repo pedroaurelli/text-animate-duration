@@ -50,7 +50,7 @@ export default function Home() {
   const [responseSize, setResponseSize] = useState<number>((text.length / 3))
   const [largeTextValue, setLargeTextValue] = useState<number>((text.length / 2))
 
-  const [serverResponseDuration, setServerResponseDuration] = useState<number>(0)
+  const [serverResponseDuration, setServerResponseDuration] = useState<number | null>(0)
   const [finalResponse, setFinalResponse] = useState<string | null>(null)
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -65,13 +65,15 @@ export default function Home() {
     */
     setIsLoading(true)
 
-    const timeout = setTimeout(() => {
-      setIsLoading(false)
+    if (serverResponseDuration) {
+      const timeout = setTimeout(() => {
+        setIsLoading(false)
 
-      return (
-        clearTimeout(timeout)
-      )
-    }, serverResponseDuration)
+        return (
+          clearTimeout(timeout)
+        )
+      }, serverResponseDuration)
+    }
   }
 
   const disabledButton = !minDuration || !maxDuration || !largeTextValue || !responseSize
@@ -139,21 +141,23 @@ export default function Home() {
             </button>
           )}
         </div>
-        <div className='font-normal text-purple-400 mt-4'>
-          <p className='text-sm'>Server response time (loading) = {formattedNumber(serverResponseDuration / 1000)}s</p>
-          <p className='text-sm'>Char animation duration = {calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue)}ms</p>
-          <p className='text-sm'>Total response time (animation + Server response time) = {formattedNumber(((calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue) * responseSize) + serverResponseDuration) / 1000)}s</p>
-        </div>
+        {serverResponseDuration && (
+            <div className='font-normal text-purple-200 mt-4'>
+              <p className='text-sm'>Server response time (loading) = {formattedNumber(serverResponseDuration / 1000)}s</p>
+              <p className='text-sm'>Char animation duration = {calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue)}ms</p>
+              <p className='text-sm text-purple-400'>Total response time (animation + Server response time) = {formattedNumber(((calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue) * responseSize) + serverResponseDuration) / 1000)}s</p>
+          </div>
+        )}
       </div>
       <div className='bg-neutral-900 w-full h-full p-4'>
         <h2 className='text-3xl font-semibold mb-4'>
           Assistant output
           {serverResponseDuration && (
-            <div className='font-normal text-purple-400'>
+            <div className='font-normal text-purple-200 mt-4'>
               <p className='text-sm'>Server response time (loading) = {formattedNumber(serverResponseDuration / 1000)}s</p>
               <p className='text-sm'>Char animation duration = {calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue)}ms</p>
-              <p className='text-sm'>Total response time (animation + Server response time) = {formattedNumber(((calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue) * responseSize) + serverResponseDuration) / 1000)}s</p>
-            </div>
+              <p className='text-sm text-purple-400'>Total response time (animation + Server response time) = {formattedNumber(((calculateAnimationDuration(responseSize, maxDuration, minDuration, largeTextValue) * responseSize) + serverResponseDuration) / 1000)}s</p>
+          </div>
           )}
         </h2>
         <>
